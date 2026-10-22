@@ -1,0 +1,25 @@
+<!-- Add this to your landing page's <head> section -->
+<link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+
+<!-- Add this to your landing page's <body> section, before closing </body> -->
+<script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+<script type="text/javascript">
+  // Open Calendly popup automatically on page load
+  window.onload = function() {
+    setTimeout(function() {
+      Calendly.initPopupWidget({
+        url: 'https://calendly.com/beginwakaa',
+        prefill: {},
+        utm: {}
+      });
+    }, 500);
+  };
+
+  // Listen for Calendly event scheduled
+  window.addEventListener('message', function(e) {
+    if (e.data.event && e.data.event === 'calendly.event_scheduled') {
+      // Redirect to Paystack after event is scheduled
+      window.open('https://paystack.shop/pay/beginwaka_advisory', '_blank');
+    }
+  });
+</script>

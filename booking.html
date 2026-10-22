@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Advisory Session - Beginwaka</title>
+    <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .info-text {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .loading-text {
+            color: #0069ff;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Book Your Session</h1>
+        <p class="subtitle">Beginwaka Advisory</p>
+
+        <p class="info-text">
+            The scheduling window should open automatically. If it doesn't appear, please check your browser's popup blocker settings.
+        </p>
+
+        <p class="loading-text">
+            Opening Calendly...
+        </p>
+    </div>
+
+    <!-- Calendly widget -->
+    <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+    <script type="text/javascript">
+        // Open Calendly popup automatically on page load
+        window.onload = function() {
+            setTimeout(function() {
+                Calendly.initPopupWidget({
+                    url: 'https://calendly.com/beginwakaa',
+                    prefill: {},
+                    utm: {}
+                });
+            }, 500);
+        };
+
+        // Listen for Calendly event scheduled
+        window.addEventListener('message', function(e) {
+            if (e.data.event && e.data.event === 'calendly.event_scheduled') {
+                // Redirect to Paystack after event is scheduled
+                window.open('https://paystack.shop/pay/beginwaka_advisory', '_blank');
+            }
+        });
+    </script>
+</body>
+</html>
