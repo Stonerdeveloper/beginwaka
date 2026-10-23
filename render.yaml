@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: beginwaka-consultation-booking
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://beginwaka-consultation-booking.onrender.com
+      - key: NEXT_PUBLIC_CALENDLY_URL
+        value: https://calendly.com/beginwakaa
+      - key: CALENDLY_PERSONAL_ACCESS_TOKEN
+        sync: false
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_AMOUNT
+        value: 1500000
+      - key: PAYSTACK_CURRENCY
+        value: NGN
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: PAYMENT_DEADLINE_MINUTES
+        value: 15
+
+crons:
+  - name: expire-unpaid-bookings
+    schedule: "*/5 * * * *"
+    command: curl -X GET https://beginwaka-consultation-booking.onrender.com/api/jobs/expire-bookings -H "Authorization: Bearer $CRON_SECRET"
+    service: beginwaka-consultation-booking
