@@ -20,12 +20,6 @@
       "dest": "/api/"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/jobs/expire-bookings",
-      "schedule": "*/5 * * * *"
-    }
-  ],
   "env": {
     "NEXT_PUBLIC_APP_URL": "https://beginwaka.com",
     "NEXT_PUBLIC_CALENDLY_URL": "https://calendly.com/beginwakaa",

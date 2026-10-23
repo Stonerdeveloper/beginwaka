@@ -1,0 +1,17 @@
+name: Expire Unpaid Bookings
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  expire-bookings:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expire bookings API
+        run: |
+          curl -X GET \
+            "${{ secrets.APP_URL }}/api/jobs/expire-bookings" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
