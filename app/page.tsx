@@ -11,14 +11,12 @@ declare global {
 }
 
 type CalendlyMessage = { event?: string; payload?: { event?: { uri?: string }; invitee?: { uri?: string } } };
-type PaystackMessage = { event?: string; status?: string };
 
 export default function BookingPage() {
   const [status, setStatus] = useState("Opening the booking calendar…");
   const [calendlyReady, setCalendlyReady] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
   const calendlyRef = useRef<HTMLDivElement>(null);
 
@@ -90,48 +88,27 @@ export default function BookingPage() {
     {showPayment && (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ width: '90%', maxWidth: '600px', height: '80%', backgroundColor: 'white', borderRadius: '8px', position: 'relative' }}>
-          {!paymentSuccess && (
+          <button 
+            onClick={() => setShowCloseWarning(true)}
+            style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10000, backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', fontSize: '18px' }}
+          >
+            ×
+          </button>
+          <iframe 
+            src="https://paystack.shop/pay/beginwaka_advisory" 
+            style={{ width: '100%', height: '100%', border: 'none', borderRadius: '8px', paddingBottom: '70px' }}
+            title="Payment"
+          />
+          <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', padding: '20px', backgroundColor: 'white', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'center', gap: '10px' }}>
             <button 
-              onClick={() => setShowCloseWarning(true)}
-              style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10000, backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', fontSize: '18px' }}
+              onClick={() => {
+                setShowPayment(false);
+              }}
+              style={{ padding: '12px 24px', backgroundColor: '#00a651', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
             >
-              ×
+              I've Completed Payment - Continue Booking
             </button>
-          )}
-          {paymentSuccess ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '40px', textAlign: 'center', backgroundColor: 'white' }}>
-              <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
-              <h2 style={{ margin: '0 0 10px 0', color: '#00a651' }}>Payment Successful!</h2>
-              <p style={{ color: '#666', marginBottom: '20px' }}>Your consultation booking has been confirmed. You can now continue with your booking.</p>
-              <button 
-                onClick={() => {
-                  setShowPayment(false);
-                  setPaymentSuccess(false);
-                }}
-                style={{ padding: '12px 24px', backgroundColor: '#00a651', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
-              >
-                Continue Booking
-              </button>
-            </div>
-          ) : (
-            <>
-              <iframe 
-                src="https://paystack.shop/pay/beginwaka_advisory" 
-                style={{ width: '100%', height: '100%', border: 'none', borderRadius: '8px', paddingBottom: '70px' }}
-                title="Payment"
-              />
-              <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', padding: '20px', backgroundColor: 'white', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                <button 
-                  onClick={() => {
-                    setPaymentSuccess(true);
-                  }}
-                  style={{ padding: '12px 24px', backgroundColor: '#00a651', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
-                >
-                  I've Completed Payment
-                </button>
-              </div>
-            </>
-          )}
+          </div>
         </div>
       </div>
     )}
