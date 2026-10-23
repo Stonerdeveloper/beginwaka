@@ -11,7 +11,7 @@ declare global {
 }
 
 type CalendlyMessage = { event?: string; payload?: { event?: { uri?: string }; invitee?: { uri?: string } } };
-type PaystackMessage = { event?: string; data?: { status?: string; event?: string } };
+type PaystackMessage = { event?: string; status?: string };
 
 export default function BookingPage() {
   const [status, setStatus] = useState("Opening the booking calendar…");
