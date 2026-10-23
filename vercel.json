@@ -9,15 +9,5 @@
         "localCommand": "pnpm install --no-optional"
       }
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/"
-    }
   ]
 }
