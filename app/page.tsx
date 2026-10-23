@@ -83,12 +83,32 @@ export default function BookingPage() {
 
   // Listen for Paystack payment success messages from iframe
   useEffect(() => {
-    function handlePaystackMessage(message: MessageEvent<PaystackMessage>) {
+    function handlePaystackMessage(message: MessageEvent) {
       // Paystack Shop may send success messages from various origins
-      console.log("Paystack message received:", message.data);
+      console.log("Message received from:", message.origin, "data:", message.data);
       
-      // Check for payment success
-      if (message.data?.event === "success" || message.data?.status === "success") {
+      // Check for various possible success message formats
+      const data = message.data;
+      let isSuccess = false;
+      
+      // Check direct properties
+      if (data?.event === "success" || data?.status === "success") {
+        isSuccess = true;
+      }
+      // Check nested data structure
+      if (data?.data?.event === "success" || data?.data?.status === "success") {
+        isSuccess = true;
+      }
+      // Check for success in string format
+      if (typeof data === "string" && data.toLowerCase().includes("success")) {
+        isSuccess = true;
+      }
+      // Check for payment.completed or similar
+      if (data?.payment?.status === "success" || data?.payment?.completed === true) {
+        isSuccess = true;
+      }
+      
+      if (isSuccess) {
         console.log("Payment successful, closing popup...");
         setPaymentSuccess(true);
         // Close payment popup after a short delay to show success, then allow user to continue with Calendly
@@ -121,6 +141,7 @@ export default function BookingPage() {
               <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
               <h2 style={{ margin: '0 0 10px 0', color: '#00a651' }}>Payment Successful!</h2>
               <p style={{ color: '#666', marginBottom: '20px' }}>Your consultation booking has been confirmed. You can now continue with your booking.</p>
+              <p style={{ color: '#999', fontSize: '14px', marginBottom: '20px' }}>Closing automatically in 2 seconds...</p>
               <button 
                 onClick={() => {
                   setShowPayment(false);
