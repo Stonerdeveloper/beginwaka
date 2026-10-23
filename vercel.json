@@ -19,17 +19,5 @@
       "src": "/api/(.*)",
       "dest": "/api/"
     }
-  ],
-  "env": {
-    "NEXT_PUBLIC_APP_URL": "https://beginwaka.com",
-    "NEXT_PUBLIC_CALENDLY_URL": "https://calendly.com/beginwakaa",
-    "CALENDLY_PERSONAL_ACCESS_TOKEN": "@calendly_personal_access_token",
-    "PAYSTACK_SECRET_KEY": "@paystack_secret_key",
-    "PAYSTACK_AMOUNT": "1500000",
-    "PAYSTACK_CURRENCY": "NGN",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_SECRET_KEY": "@supabase_secret_key",
-    "CRON_SECRET": "@cron_secret",
-    "PAYMENT_DEADLINE_MINUTES": "15"
-  }
+  ]
 }
