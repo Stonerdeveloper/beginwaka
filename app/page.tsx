@@ -81,46 +81,8 @@ export default function BookingPage() {
     return () => window.removeEventListener("message", handleScheduledEvent);
   }, [calendlyReady, calendlyUrl]);
 
-  // Listen for Paystack payment success messages from iframe
-  useEffect(() => {
-    function handlePaystackMessage(message: MessageEvent) {
-      // Paystack Shop may send success messages from various origins
-      console.log("Message received from:", message.origin, "data:", message.data);
-      
-      // Check for various possible success message formats
-      const data = message.data;
-      let isSuccess = false;
-      
-      // Check direct properties
-      if (data?.event === "success" || data?.status === "success") {
-        isSuccess = true;
-      }
-      // Check nested data structure
-      if (data?.data?.event === "success" || data?.data?.status === "success") {
-        isSuccess = true;
-      }
-      // Check for success in string format
-      if (typeof data === "string" && data.toLowerCase().includes("success")) {
-        isSuccess = true;
-      }
-      // Check for payment.completed or similar
-      if (data?.payment?.status === "success" || data?.payment?.completed === true) {
-        isSuccess = true;
-      }
-      
-      if (isSuccess) {
-        console.log("Payment successful, closing popup...");
-        setPaymentSuccess(true);
-        // Close payment popup after a short delay to show success, then allow user to continue with Calendly
-        setTimeout(() => {
-          setShowPayment(false);
-          setPaymentSuccess(false); // Reset for next time
-        }, 2000);
-      }
-    }
-    window.addEventListener("message", handlePaystackMessage);
-    return () => window.removeEventListener("message", handlePaystackMessage);
-  }, []);
+  // Note: Paystack Shop doesn't send postMessage events, so auto-close is not possible
+  // Users must manually click "Continue Booking" after completing payment
 
   return <main style={{ margin: 0, padding: 0, width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
     <div ref={calendlyRef} style={{ width: '100%', height: '100%' }}></div>
@@ -137,11 +99,10 @@ export default function BookingPage() {
             </button>
           )}
           {paymentSuccess ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '40px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '40px', textAlign: 'center', backgroundColor: 'white' }}>
               <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
               <h2 style={{ margin: '0 0 10px 0', color: '#00a651' }}>Payment Successful!</h2>
               <p style={{ color: '#666', marginBottom: '20px' }}>Your consultation booking has been confirmed. You can now continue with your booking.</p>
-              <p style={{ color: '#999', fontSize: '14px', marginBottom: '20px' }}>Closing automatically in 2 seconds...</p>
               <button 
                 onClick={() => {
                   setShowPayment(false);
@@ -153,11 +114,23 @@ export default function BookingPage() {
               </button>
             </div>
           ) : (
-            <iframe 
-              src="https://paystack.shop/pay/beginwaka_advisory" 
-              style={{ width: '100%', height: '100%', border: 'none', borderRadius: '8px' }}
-              title="Payment"
-            />
+            <>
+              <iframe 
+                src="https://paystack.shop/pay/beginwaka_advisory" 
+                style={{ width: '100%', height: '100%', border: 'none', borderRadius: '8px', paddingBottom: '70px' }}
+                title="Payment"
+              />
+              <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', padding: '20px', backgroundColor: 'white', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                <button 
+                  onClick={() => {
+                    setPaymentSuccess(true);
+                  }}
+                  style={{ padding: '12px 24px', backgroundColor: '#00a651', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
+                >
+                  I've Completed Payment
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
