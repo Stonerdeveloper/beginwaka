@@ -17,8 +17,11 @@ export default function BookingPage() {
   const [calendlyReady, setCalendlyReady] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
-  const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
+  const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL || "https://calendly.com/beginwakaa";
   const calendlyRef = useRef<HTMLDivElement>(null);
+
+  // Debug logging
+  console.log("Calendly URL from env:", calendlyUrl);
 
   useEffect(() => {
     if (!calendlyUrl) { console.error("Calendly URL not configured"); return; }
