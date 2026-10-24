@@ -6,7 +6,7 @@ import { useEffect, useState, useRef } from "react";
 declare global {
   interface Window {
     Calendly?: { initPopupWidget: (options: { url: string }) => void; initInlineWidget: (options: { url: string; parentElement: HTMLElement; config?: { layout?: { month?: number } } }) => void };
-    PaystackPop?: new () => { resumeTransaction: (accessCode: string) => void };
+    PaystackPop?: any;
   }
 }
 
@@ -16,9 +16,63 @@ export default function BookingPage() {
   const [status, setStatus] = useState("Opening the booking calendar…");
   const [calendlyReady, setCalendlyReady] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
   const calendlyUrl = process.env.NEXT_PUBLIC_CALENDLY_URL;
   const calendlyRef = useRef<HTMLDivElement>(null);
+
+  async function initializeAndOpenPayment() {
+    try {
+      // Generate a reference for this payment
+      const reference = `bw_${crypto.randomUUID().replaceAll("-", "")}`;
+      const email = "customer@example.com"; // You'll want to get this from Calendly if possible
+      
+      const response = await fetch("/api/payments/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          eventUri: "pending", 
+          inviteeUri: "pending",
+          email: email 
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.accessCode) {
+        console.error("Failed to initialize payment");
+        return;
+      }
+      
+      // Open Paystack inline popup using access code
+      const handler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+        email: email,
+        amount: process.env.NEXT_PUBLIC_PAYSTACK_AMOUNT || "1500000",
+        currency: process.env.NEXT_PUBLIC_PAYSTACK_CURRENCY || "NGN",
+        ref: reference,
+        callback: function() {
+          // Payment completed - this will be called after postMessage
+          console.log("Payment callback triggered");
+        },
+        onClose: function() {
+          console.log("Payment popup closed");
+          setShowPayment(false);
+          // Reload page if payment was not completed
+          if (!paymentCompleted) {
+            console.log("Payment not completed, reloading page...");
+            window.location.reload();
+          }
+        }
+      });
+      
+      handler.openIframe();
+      setShowPayment(true);
+      
+    } catch (error) {
+      console.error("Payment initialization failed", error);
+    }
+  }
 
   useEffect(() => {
     if (!calendlyUrl) { console.error("Calendly URL not configured"); return; }
@@ -44,7 +98,7 @@ export default function BookingPage() {
       console.log("Calendly event received:", message.data?.event);
       console.log("Payload:", message.data?.payload);
       
-      // When date/time selected, open payment popup (blocks UI until paid)
+      // When date/time selected, initialize and open Paystack inline payment
       if (message.data?.event === "calendly.date_and_time_selected") {
         const paymentCompleted = sessionStorage.getItem('payment_completed_at');
         const paymentTime = paymentCompleted ? parseInt(paymentCompleted) : 0;
@@ -52,90 +106,57 @@ export default function BookingPage() {
         
         // Only open payment if not completed in last 15 minutes
         if (!paymentCompleted || timeSincePayment > 15 * 60 * 1000) {
-          console.log("Date/time selected, opening payment...");
-          setShowPayment(true);
+          console.log("Date/time selected, initializing Paystack payment...");
+          initializeAndOpenPayment();
         }
       }
       
       // When event scheduled, mark payment as completed in session
       if (message.data?.event === "calendly.event_scheduled") {
-        const eventUri = message.data.payload?.event?.uri;
-        const inviteeUri = message.data.payload?.invitee?.uri;
-        
-        if (!eventUri || !inviteeUri) return;
-        
-        // Mark that payment was completed (user will have paid via Shop link)
         sessionStorage.setItem('payment_completed_at', Date.now().toString());
-        
-        // Save booking to database with paid status
-        try {
-          const reference = `bw_${crypto.randomUUID().replaceAll("-", "")}`;
-          await fetch("/api/payments/initialize", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventUri, inviteeUri }) });
-          console.log("Booking saved");
-        } catch (error) { console.error("Failed to save booking", error); }
       }
     }
     window.addEventListener("message", handleScheduledEvent);
     return () => window.removeEventListener("message", handleScheduledEvent);
   }, [calendlyReady, calendlyUrl]);
 
-  // Note: Paystack Shop doesn't send postMessage events, so auto-close is not possible
-  // Users must manually click "Continue Booking" after completing payment
+  // Listen for Paystack inline checkout success events
+  useEffect(() => {
+    function handlePaystackMessage(message: MessageEvent) {
+      if (message.origin !== "https://paystack.co") return;
+      
+      console.log("Paystack message:", message.data);
+      
+      // Check for payment success
+      if (message.data?.event === "success") {
+        console.log("Payment successful!");
+        setPaymentSuccess(true);
+        setPaymentCompleted(true);
+        sessionStorage.setItem('payment_completed_at', Date.now().toString());
+        
+        // Auto-close after showing success message
+        setTimeout(() => {
+          setShowPayment(false);
+          setPaymentSuccess(false);
+        }, 2000);
+      }
+    }
+    
+    window.addEventListener("message", handlePaystackMessage);
+    return () => window.removeEventListener("message", handlePaystackMessage);
+  }, []);
+
+
 
   return <main style={{ margin: 0, padding: 0, width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
     <div ref={calendlyRef} style={{ width: '100%', height: '100%' }}></div>
     
-    {showPayment && (
+    {showPayment && paymentSuccess && (
       <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '90%', maxWidth: '600px', height: '80%', backgroundColor: 'white', borderRadius: '8px', position: 'relative' }}>
-          <button 
-            onClick={() => setShowCloseWarning(true)}
-            style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10000, backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', fontSize: '18px' }}
-          >
-            ×
-          </button>
-          <iframe 
-            src="https://paystack.shop/pay/beginwaka_advisory" 
-            style={{ width: '100%', height: '100%', border: 'none', borderRadius: '8px', paddingBottom: '70px' }}
-            title="Payment"
-          />
-          <div style={{ position: 'absolute', bottom: '0', left: '0', right: '0', padding: '20px', backgroundColor: 'white', borderTop: '1px solid #eee', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-            <button 
-              onClick={() => {
-                setShowPayment(false);
-              }}
-              style={{ padding: '12px 24px', backgroundColor: '#00a651', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '16px' }}
-            >
-              I've Completed Payment - Continue Booking
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-    
-    {showCloseWarning && (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 10001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px', maxWidth: '400px', textAlign: 'center' }}>
-          <h3 style={{ marginTop: 0 }}>Cancel Payment?</h3>
-          <p style={{ marginBottom: '20px' }}>Closing payment will cancel your booking for this consultation session.</p>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-            <button 
-              onClick={() => {
-                setShowCloseWarning(false);
-                setShowPayment(false);
-                window.location.reload();
-              }}
-              style={{ padding: '10px 20px', backgroundColor: '#ff4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
-              Yes, Cancel
-            </button>
-            <button 
-              onClick={() => setShowCloseWarning(false)}
-              style={{ padding: '10px 20px', backgroundColor: '#006bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
-              Stay & Pay
-            </button>
-          </div>
+        <div style={{ backgroundColor: 'white', padding: '40px', borderRadius: '8px', textAlign: 'center' }}>
+          <div style={{ fontSize: '64px', marginBottom: '20px' }}>✅</div>
+          <h2 style={{ margin: '0 0 10px 0', color: '#00a651' }}>Payment Successful!</h2>
+          <p style={{ color: '#666' }}>You can now complete your Calendly booking.</p>
         </div>
       </div>
     )}
