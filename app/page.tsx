@@ -161,7 +161,14 @@ export default function BookingPage() {
       </div>
     )}
     
-    <Script src="https://assets.calendly.com/assets/external/widget.js" strategy="afterInteractive" onLoad={() => setCalendlyReady(true)} />
-    <Script src="https://js.paystack.co/v2/inline.js" strategy="afterInteractive" />
+    <Script 
+      src="https://assets.calendly.com/assets/external/widget.js" 
+      strategy="afterInteractive" 
+      onLoad={() => setCalendlyReady(true)} 
+    />
+    <Script 
+      src="https://js.paystack.co/v2/inline.js" 
+      strategy="lazyOnload" 
+    />
   </main>;
 }
